@@ -3,6 +3,7 @@ import face_recognition
 import dlib
 import numpy as np
 import os
+import serial 
 
 ''' deep learnong algorithm based face detector (convolutional neural network)'''
 cnn_face_detector = dlib.cnn_face_detection_model_v1("mmod_human_face_detector.dat")
@@ -14,6 +15,12 @@ embedding_model = dlib.face_recognition_model_v1("dlib_face_recognition_resnet_m
 
 ''' this predictor model finds 68 crusial landscapes points on the image, like the eyes, nose, ...'''
 shape_predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+
+
+ser = serial.Serial()  # get serial instance
+ser.baudrate = 9600
+ser.port = 'COM1'
+print(ser.name)
 
 
 def extract_face (image, x1, y1, x2, y2):  #extract the detected face from the image
@@ -41,6 +48,41 @@ def convert_and_trim(image, rect):  #converts dlib rectangle coordinates to the 
     w = endX - startX
     h = endY - startY
     return(startX, startY, w, h)
+
+
+def adding_photoFolder_to_Dataset(folder_path, person_name, database_path = 'dataset'):
+    photos = os.listdir(folder_path)
+    count = 0
+    conf_thresh = 0.6
+    person_folder_path = os.path.join(database_path, person_name)
+    for photo in photos:
+        photo_path = os.path.join(folder_path, photo)   # or = f"{folder_path}/{photo}"
+        img = cv2.imread(photo_path)
+        rgb_photo = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        faces = cnn_face_detector(rgb_photo)
+        
+        for face in faces :
+            
+            face_conf = face.confidence
+            if face_conf < conf_thresh:
+                continue
+            
+            x1 = face.rect.left()
+            y1 = face.recr.top()
+            x2 = face.rect.right()
+            y2 = face.rect.bottom()
+            
+            cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 255), 2)
+            
+            extracted_face = img[y1:y2, x1:x2]
+            extracted_face_path = f"{person_folder_path}/{person_name}_{count}.png"
+            cv2.imwrite(extracted_face_path, extracted_face)
+    
+    generate_embeddings(person_name)
+            
+
+
 
 def capture_owners_face(name, database_path = 'dataset'):
     
@@ -104,7 +146,7 @@ def generate_embeddings(name, database_path = 'dataset'):
         for face in faces:
             print("Now, shape predictor is working...")
             face_landscapes =shape_predictor(rgb_image, face.rect)
-            face_alligned = dlib.get_face_chip(rgb_image, face_landscapes) #allignes the face to be easily processed
+            face_alligned = dlib.get_face_chip(rgb_image, face_landscapes) #uses the landscapes points to alligne the face to be easily processed
             face_embedding = embedding_model.compute_face_descriptor(face_alligned)
             print("Embedding generated:", face_embedding)
             embeddings.append(np.array(face_embedding))
@@ -145,7 +187,7 @@ def recognize_face(persons, tolerance=0.4):
                         cv2.rectangle(imageframe, (face.rect.left(),face.rect.top()), (face.rect.right(), face.rect.bottom()), (0,255,0), 3)
                         cv2.putText(imageframe, f"{person_name}", (face.rect.left(), face.rect.top()-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255,0, 0), 2)
                         recognized = 1
-                        # send signal to mc 1
+                        # ser.write(b'1')
                         break  #break from inner loop
                 if recognized:
                     break   #break from the outer loop
@@ -155,11 +197,11 @@ def recognize_face(persons, tolerance=0.4):
                 cv2.putText(imageframe, "trespasser", (face.rect.left(), face.rect.top()-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0,255 ), 2)
                 
                  #if case==1 :
-                    #send signal to mc 0
+                    #ser.write(b'0')
                 #elif case ==2:
-                    #send signal to mc 1
+                    #ser.write(b'1')
                 #elif case == 3:
-                    # send signal to mc 1
+                    # ser.write(b'1')
                     # np.save(f"dataset/{visitorName}_embeddings.npy", visitor_embeddings)  # save the visitor embedding to the dataset
                 
 
@@ -175,26 +217,8 @@ def remove_person(person_name):    #remove a person from the dataset
     os.remove(f"dataset/{person_name}_embeddings.npy")      
     
    
-persons = ["Heba"]  
-recognize_face(persons)
-
-
-'''def face_detection(image):
-    image = cv2.resize(image, (0,0), fx=0.5, fy=0.5)  #resizing to speed up the processing
-    rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) #dlib works with rgb
-    
-    faces = cnn_face_detector(rgb_image,1)  #upsamble the image once in order ro detect small faces if there's any
-    for face in faces :
-        x, y, w, h = convert_and_trim(image, face.rect)
-        cv2.rectangle(image, (x, y), (x+w, y+h), (255,0,255), 2)
-        cv2.imshow("step1", image)
-        x1, y1, x2, y2 = (face.rect.left(), face.rect.top(), face.rect.right(), face.rect.bottom()) 
-        face_region = dlib.rectangle(x1, y1, x2, y2)  #extracting the face region'''
-    
-
-    
-    
-
+#persons = ["Heba"]  
+#recognize_face(persons)
 #print (face_recognition.__version__)
 
     
