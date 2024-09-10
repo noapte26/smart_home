@@ -4,6 +4,9 @@ import dlib
 import numpy as np
 import os
 import serial 
+import customtkinter
+import time
+
 
 ''' deep learnong algorithm based face detector (convolutional neural network)'''
 cnn_face_detector = dlib.cnn_face_detection_model_v1("mmod_human_face_detector.dat")
@@ -17,10 +20,20 @@ embedding_model = dlib.face_recognition_model_v1("dlib_face_recognition_resnet_m
 shape_predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
 
-ser = serial.Serial()  # get serial instance
-ser.baudrate = 9600
-ser.port = 'COM1'
+ser = serial.Serial('COM1', 9600, timeout=1)  # get serial instance and set timeout to 1, it returns all available bytes after 1s
 print(ser.name)
+
+def send_signal(signal):
+    ser.write(signal.encode())
+    print(f'sent {signal} to mc')
+    
+def recieve_message():
+    while ser.in_waiting():
+        message_inBytes = ser.readline()
+        message_string = message_inBytes.decode('utf-8').strip() #decode and strip away excess characters
+        print(f'recieved {message_string} from mc ')
+        return message_string
+
 
 
 def extract_face (image, x1, y1, x2, y2):  #extract the detected face from the image
@@ -69,7 +82,7 @@ def adding_photoFolder_to_Dataset(folder_path, person_name, database_path = 'dat
                 continue
             
             x1 = face.rect.left()
-            y1 = face.recr.top()
+            y1 = face.rect.top()
             x2 = face.rect.right()
             y2 = face.rect.bottom()
             
@@ -187,7 +200,7 @@ def recognize_face(persons, tolerance=0.4):
                         cv2.rectangle(imageframe, (face.rect.left(),face.rect.top()), (face.rect.right(), face.rect.bottom()), (0,255,0), 3)
                         cv2.putText(imageframe, f"{person_name}", (face.rect.left(), face.rect.top()-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255,0, 0), 2)
                         recognized = 1
-                        # ser.write(b'1')
+                        send_signal('1')
                         break  #break from inner loop
                 if recognized:
                     break   #break from the outer loop
@@ -197,11 +210,11 @@ def recognize_face(persons, tolerance=0.4):
                 cv2.putText(imageframe, "trespasser", (face.rect.left(), face.rect.top()-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0,255 ), 2)
                 
                  #if case==1 :
-                    #ser.write(b'0')
+                    #send_signal('0')
                 #elif case ==2:
-                    #ser.write(b'1')
+                    #send_signal('1')
                 #elif case == 3:
-                    # ser.write(b'1')
+                    #send_signal('1')
                     # np.save(f"dataset/{visitorName}_embeddings.npy", visitor_embeddings)  # save the visitor embedding to the dataset
                 
 
