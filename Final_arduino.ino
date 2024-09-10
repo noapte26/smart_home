@@ -33,12 +33,12 @@ char keys[16] =  //keypad characters
    '*', '0', '#', 'D'};
 
 int keysVAL [16] = { //keypad numerical values
-  501, 522, 542, 560,
-  399, 429, 456, 481,
-  248, 294, 335, 371,
-  0,    79, 146, 204};
+  501, 519, 536, 552,
+  399, 425, 448, 470,
+  248, 287, 323, 355,
+  0,    67, 126, 178};
 
-int range = 9; //tolerance
+int range = 8; //tolerance
 
 String get_char(int keyIN){
   String chr = ""; //empty string to store char
@@ -59,12 +59,10 @@ String get_string(){
         keyIN = analogRead(KEYPAD_PIN);
         x = get_char(keyIN);
 
-        if (x == "*"){
+        if (x == "*"){ //acts as enter
           Serial.println("");
           return str;
         }
-          
-
         Serial.print(x);
         str += x;
       }
@@ -74,7 +72,9 @@ String get_string(){
 class Password{
   private:
     String password;
+
   public:
+    int tries = 3;
     //create a construct to save our password
     Password (String placeholder){ //use "this->" because password is private
       this->password = placeholder;
@@ -83,26 +83,41 @@ class Password{
     //set first password
     void set_initial_password(const String& initial_password){
       this->password = initial_password;
+      Serial.println("Passord saved!");
     }
 
     //change password function
     void change_password(){
-      //if the entered password is the correect
-      if (check_password(get_string())){
+      Serial.println("Changing Password");
+      Serial.println("----------------------------------");
+      //if the entered password is the correct
+      Serial.println("Enter old password:");
+
+      if (check_password(get_string()) && this->tries > 0){
         Serial.println("Correct Password");
         Serial.println("Enter NEW password:");
         this->password = get_string();
         Serial.println("New Password Saved!");
+      } 
+      //too many tries
+      else if (this->tries == 0){
+        Serial.println("Too many Tries");
+        Serial.println("You are now Locked");
       }
-      //else if it is wrong
+      //else if it is wrong but tries > 0
       else{
         Serial.println("WRONG password");
+        Serial.print("Number of tries left: ");
+        Serial.println(this->tries);
       }
     }
 
     //password checker
     bool check_password(String input_password){
-      Serial.println("Enter password:");
+      if (input_password == this->password)
+        this->tries = 3;
+      else
+        this->tries--;
       return (input_password == this->password); //returns 1 if the entered password is the same as the original password
     }
 
@@ -116,12 +131,8 @@ class Password{
     }
 };
 
-//place holder password to be global across all scopes
+//place holder password to be GLOBAL across all scopes
 Password mypassword("");
-//a flag to see if it is the first time we enter a password or if we are changing it
-bool flagg = 0;
-
-
 
 /////////////////////// MAIN ///////////////////////
 void setup(){
@@ -150,128 +161,158 @@ void setup(){
   pinMode(rgb_red, OUTPUT);
   pinMode(rgb_green, OUTPUT);
   pinMode(rgb_blue, OUTPUT);
+
   //setting the initial state of RGB LED to off
   analogWrite(rgb_red, 0);
   analogWrite(rgb_green, 0);
   analogWrite(rgb_blue, 0);
-  
+
+  //set initial password
+  Serial.println("Please enter your first password:");
+  // mypassword.set_initial_password(get_string());
+
 }
 
 void loop(){
+
+  //////////// FOR READING KEY VALUES /////////////////
+  while(1){
+  Serial.println((analogRead(KEYPAD_PIN)));
+  }
+  //////////// FOR READING KEY VALUES /////////////////
+
   //always read keys
   keyIN = analogRead(KEYPAD_PIN);
   String x = get_char(keyIN);
-   
 
   //see if a key is pressed and save it
   if (x != ""){
-    if (x == "#"){ 
-      if (flagg == 0){ //first time adding a password
-        Serial.println("Enter your First password:");
-        mypassword.set_initial_password (get_string());
-        Serial.println("Password Saved!");
-        flagg = 1; //make sure that the flag is set 
+    if (x == "#"){ //change password button 
+      mypassword.change_password();
       }
-      else{ //not the first password but we are changing the password
-        mypassword.change_password();
-      }
-    }
-    else if (x == "*"){ //password tester
-      mypassword.show_password();
-    }
+
+    //////////////////////// FOR TESTING //////////////////
+    // else if (x == "*"){ //password tester
+    //   mypassword.show_password();
+    // }
+    //////////////////////// FOR TESTING //////////////////
+
   }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
-  if (1){
-  ////////first,LDR and light system level
+  
+if (x == "*"){ //if we press * we want to enter password
+  Serial.println("Enter password to enter home");
+  bool ans = mypassword.check_password(get_string());
 
-  //Read the LDR value (0-1023)
-  int ldrValue = analogRead(ldr);
+  //right guess
+  if (ans && mypassword.tries > 0){
+    Serial.println("Correct Password!");
+    Serial.println("Welcome home");
 
-  //Map the LDR value to a PWM range (0-255)
-  int lightLevel = map(ldrValue,0,1023,0,255);
+    ////////first,LDR and light system level/////////////////////////////////////
+    //Read the LDR value (0-1023)
+    int ldrValue = analogRead(ldr);
 
-  //Set the light system brightness
-  analogWrite(led, lightLevel);
+    //Map the LDR value to a PWM range (0-255)
+    int lightLevel = map(ldrValue,0,1023,0,255);
 
-  // Print the LDR value and light level to the serial monitor
-  Serial.print("LDR Value: ");
-  Serial.print(ldrValue);
-  Serial.print("Light Level: ");
-  Serial.println(lightLevel);
+    //Set the light system brightness
+    analogWrite(led, lightLevel);
 
-  //Delay
-  delay(200);
+    // Print the LDR value and light level to the serial monitor
+    Serial.print("LDR Value: ");
+    Serial.println(ldrValue);
+    Serial.print("Light Level: ");
+    Serial.println(lightLevel);
+
+    //Delay
+    delay(200);
+
+    ////////second,temperature and the outputs depending on it/////////////////////////////////////
+
+    //Read the temperature sensor value (0-1023)
+    int tempValue = analogRead(temp);
+
+    // Convert the sensor value to a temperature in Celsius
+    int temperature = map(tempValue, 0, 308, 0, 150);
+
+    //Print the temperature(just for debugging)
+    Serial.print("Temperature: ");
+    Serial.println(temperature);
+
+      //Control RGB LED based on the temperature
+      if (temperature > 30.0) {
+        //Temperature > 30 degree celsius, turn on red LED
+        analogWrite(rgb_red, 255);
+        analogWrite(rgb_green, 0);
+        analogWrite(rgb_blue, 0);
+      } 
+      else if (temperature > 20.0) {
+        //20 degree celsius < Temperature <= 30 degree celsius, turn on green LED
+        analogWrite(rgb_red, 0);
+        analogWrite(rgb_green, 255);
+        analogWrite(rgb_blue, 0);
+        } 
+      else {
+        //Temperature <= 20 degree celsius, turn on blue LED
+        analogWrite(rgb_red, 0);
+        analogWrite(rgb_green, 0);
+        analogWrite(rgb_blue, 255);
+        }
+    
+    //Control motor speed based on temperature
+    int motorSpeed = map(temperature,20,80,128,255); //Adjust according to temp sensor range                     
+    analogWrite(motor_en, motorSpeed);               //above 128 is high and moves (anything less doesn't move)
+    digitalWrite(motor_1, 1);
+    digitalWrite(motor_2, 0); //To rotate in one direction (Fan)
 
 
-  ////////second,temperature and the outputs depending on it
+    ////Unlocking the door
+    servo.write(90); //Rotate the servo to 90 degrees to unlock the door
+    delay(2000); //Wait for 2 second to ensure the servo reaches the position
+    }
 
-  //Read the temperature sensor value (0-1023)
-  int tempValue = analogRead(temp);
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  // Convert the sensor value to a temperature in Celsius
-  int temperature = map(tempValue, 0, 308, 0, 150);
-
-  //Print the temperature(just for debugging)
-  Serial.print("Temperature: ");
-  Serial.println(temperature);
-
-  //Control RGB LED based on the temperature
-  if (temperature > 30.0) {
-    //Temperature > 30 degree celsius, turn on red LED
-    analogWrite(rgb_red, 255);
-    analogWrite(rgb_green, 0);
-    analogWrite(rgb_blue, 0);
-  } else if (temperature > 20.0) {
-    //20 degree celsius < Temperature <= 30 degree celsius, turn on green LED
-    analogWrite(rgb_red, 0);
-    analogWrite(rgb_green, 255);
-    analogWrite(rgb_blue, 0);
-  } else {
-    //Temperature <= 20 degree celsius, turn on blue LED
-    analogWrite(rgb_red, 0);
-    analogWrite(rgb_green, 0);
-    analogWrite(rgb_blue, 255);
+  //wrong password but still has some tries left
+  else if (mypassword.tries > 0){
+      Serial.println("WRONG password");
+      Serial.print("Number of tries left: ");
+      Serial.println(mypassword.tries);
   }
-  
-  //Control motor speed based on temperature
-  int motorSpeed = map(temperature,20,80,128,255); //Adjust according to temp sensor range
-  Serial.println(motorSpeed);                      //above 128 is high 
-  analogWrite(motor_en, motorSpeed);
-  digitalWrite(motor_1, 1);
-  digitalWrite(motor_2, 0); //To rotate in one direction (Fan)
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  ////Unlocking the door
-  servo.write(90); //Rotate the servo to 90 degrees to unlock the door
-  delay(500); //Wait for 2 second to ensure the servo reaches the position
+  //max number of tries done
+  else if (mypassword.tries == 0){
+  /////Now the wrong password door is locked
 
-  
-  }else{
-    /////Now the wrong password is entered or no password has been entered, door is locked and flag is zero
-    //////PIR sensor
+  while(1){
+  ////Warning messages
+  Serial.println("Wrong password, Alert!");
 
-    //Read the PIR sensor value
+  //////PIR sensor/////////////////////////////////////
+  //Read the PIR sensor value
   int motionDetected = digitalRead(pir);
 
-  //Print the PIR sensor status to the Serial Monitor
-  if (motionDetected == HIGH) {
-    Serial.println("Motion detected, someone is inside!");
-  } else {
-    Serial.println("No motion detected, home is empty.");
-  }
-  delay(1000);  //Delay
-
+    //Print the PIR sensor status to the Serial Monitor
+    if (motionDetected == HIGH) {
+      Serial.println("Motion detected, someone is inside!");
+      } 
+    else {
+      Serial.println("No motion detected, home is empty.");
+      }
 
   /////Buzzer ringing for 500 milliseconds
   digitalWrite(buzzer, HIGH);  // Turn on the buzzer
   delay(500);                     // Wait for 500 milliseconds
   digitalWrite(buzzer, LOW);   // Turn off the buzzer
   delay(500);                    // Wait for 500 second the repeat
-  
 
-  ////Warning messages
-  Serial.println("Wrong password, Alert!");
-  }
-}
+      }//bta3t el while
+    }//bta3t el else
+  }//bta3t el if el kbera
+}//bta3t void()
+
