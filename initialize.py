@@ -4,8 +4,10 @@ import dlib
 import numpy as np
 import os
 import serial 
-import customtkinter
+import customtkinter as ctk
 import time
+from PIL import Image, ImageTk
+import gui
 
 
 ''' deep learnong algorithm based face detector (convolutional neural network)'''
@@ -20,8 +22,8 @@ embedding_model = dlib.face_recognition_model_v1("dlib_face_recognition_resnet_m
 shape_predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
 
-ser = serial.Serial('COM1', 9600, timeout=1)  # get serial instance and set timeout to 1, it returns all available bytes after 1s
-print(ser.name)
+#ser = serial.Serial('COM1', 9600, timeout=1)  # get serial instance and set timeout to 1, it returns all available bytes after 1s
+#print(ser.name)
 
 def send_signal(signal):
     ser.write(signal.encode())
@@ -168,7 +170,10 @@ def generate_embeddings(name, database_path = 'dataset'):
     
 
 def recognize_face(persons, tolerance=0.4):
+    #app = gui.create_app()
+    #camera_label = gui.create_camera_frame(app)
     webcam = cv2.VideoCapture(0)
+    
     
     visitor_embeddings = []
     
@@ -177,11 +182,16 @@ def recognize_face(persons, tolerance=0.4):
         embeddings_data[person_name] = np.load(f"dataset/{person_name}_embeddings.npy")  #giving the person key it;s embeddings array
     
     while 1:
+        
+        #imageframe = gui.update_camera(camera_label, webcam)
+        #app.mainloop()
         ret, imageframe = webcam.read()  #take capture of the visitor's face
         if not ret:
             break
-
-        rgb_image = cv2.cvtColor(imageframe, cv2.COLOR_BGR2RGB)   #bec cnn works with rgb
+         
+        small_frame = cv2.resize(imageframe, (0, 0), fx=0.5, fy=0.5)  # Resize to half the original size to speed up processing
+         
+        rgb_image = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)   #bec cnn works with rgb
         faces = cnn_face_detector(rgb_image, 1)  #detect the viisitor's face
         print("visitor face detection complete..")
        
@@ -197,10 +207,14 @@ def recognize_face(persons, tolerance=0.4):
                 for stored_embedding in embeddings:   #match the visitor embidding with each embedding in embeddings array
                     distance = np.linalg.norm(stored_embedding - visitor_embedding)  # getting the euclodean distance
                     if distance < tolerance:  
-                        cv2.rectangle(imageframe, (face.rect.left(),face.rect.top()), (face.rect.right(), face.rect.bottom()), (0,255,0), 3)
-                        cv2.putText(imageframe, f"{person_name}", (face.rect.left(), face.rect.top()-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255,0, 0), 2)
+                        
+                        # get the original scale
+                        x1, y1, x2, y2 = int(face.rect.left() * 2), int(face.rect.top() * 2), int(face.rect.right() * 2), int(face.rect.bottom() * 2)
+                        
+                        cv2.rectangle(imageframe, (x1,y1), (x2, y2), (0,255,0), 3)
+                        cv2.putText(imageframe, f"{person_name}", (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255,0, 0), 2)
                         recognized = 1
-                        send_signal('1')
+                        #send_signal('1')
                         break  #break from inner loop
                 if recognized:
                     break   #break from the outer loop
@@ -226,12 +240,15 @@ def recognize_face(persons, tolerance=0.4):
             break
 
 def remove_person(person_name):    #remove a person from the dataset
-    os.remove(f"dataset/{person_name}")
-    os.remove(f"dataset/{person_name}_embeddings.npy")      
+    if os.path.exists(f"dataset/{person_name}"):
+        os.remove(f"dataset/{person_name}")
+    
+    if os.path.exists(f"dataset/{person_name}_embeddings.npy"):
+        os.remove(f"dataset/{person_name}_embeddings.npy")      
     
    
-#persons = ["Heba"]  
-#recognize_face(persons)
+persons = ["Heba"]  
+recognize_face(persons)
 #print (face_recognition.__version__)
 
     
