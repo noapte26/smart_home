@@ -99,16 +99,17 @@ class Password{
         this->password = get_string();
         Serial.println("New Password Saved!");
       } 
-      //too many tries
-      else if (this->tries == 0){
-        Serial.println("Too many Tries");
-        Serial.println("You are now Locked");
-      }
       //else if it is wrong but tries > 0
-      else{
+      else if (this->tries > 0){
         Serial.println("WRONG password");
         Serial.print("Number of tries left: ");
         Serial.println(this->tries);
+      }
+      //too many tries
+      else if (this->tries == 0){
+        Serial.println("Too many Tries");
+        Serial.println("You can't change the password anymore");
+        Serial.println("You are now locked");
       }
     }
 
@@ -176,9 +177,9 @@ void setup(){
 void loop(){
 
   //////////// FOR READING KEY VALUES /////////////////
-  while(1){
-  Serial.println((analogRead(KEYPAD_PIN)));
-  }
+  // while(1){
+  // Serial.println((analogRead(KEYPAD_PIN)));
+  // }
   //////////// FOR READING KEY VALUES /////////////////
 
   //always read keys
@@ -203,6 +204,10 @@ void loop(){
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
   
 if (x == "*"){ //if we press * we want to enter password
+  if (mypassword.tries == 0){
+    Serial.println("You are locked and can't enter the house!");
+  }
+
   Serial.println("Enter password to enter home");
   bool ans = mypassword.check_password(get_string());
 
@@ -210,6 +215,9 @@ if (x == "*"){ //if we press * we want to enter password
   if (ans && mypassword.tries > 0){
     Serial.println("Correct Password!");
     Serial.println("Welcome home");
+
+    ////Unlocking the door
+    servo.write(90); //Rotate the servo to 90 degrees to unlock the door
 
     ////////first,LDR and light system level/////////////////////////////////////
     //Read the LDR value (0-1023)
@@ -268,10 +276,7 @@ if (x == "*"){ //if we press * we want to enter password
     digitalWrite(motor_1, 1);
     digitalWrite(motor_2, 0); //To rotate in one direction (Fan)
 
-
-    ////Unlocking the door
-    servo.write(90); //Rotate the servo to 90 degrees to unlock the door
-    delay(2000); //Wait for 2 second to ensure the servo reaches the position
+    servo.write(0); //close the door
     }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -289,10 +294,10 @@ if (x == "*"){ //if we press * we want to enter password
   else if (mypassword.tries == 0){
   /////Now the wrong password door is locked
 
-  while(1){
   ////Warning messages
   Serial.println("Wrong password, Alert!");
 
+  while(1){
   //////PIR sensor/////////////////////////////////////
   //Read the PIR sensor value
   int motionDetected = digitalRead(pir);
