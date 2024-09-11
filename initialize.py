@@ -184,7 +184,7 @@ def recognize_face(persons, tolerance=0.4):
     while 1:
         
         #imageframe = gui.update_camera(camera_label, webcam)
-        #app.mainloop()
+        
         ret, imageframe = webcam.read()  #take capture of the visitor's face
         if not ret:
             break
@@ -230,14 +230,20 @@ def recognize_face(persons, tolerance=0.4):
                 #elif case == 3:
                     #send_signal('1')
                     # np.save(f"dataset/{visitorName}_embeddings.npy", visitor_embeddings)  # save the visitor embedding to the dataset
-                
+        
+            
 
         cv2.imshow('visitor', imageframe)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):  # q to quit taking captures
             webcam.release()
             cv2.destroyAllWindows()
-            break
+            #break
+        
+        #app.after(10, update_feed)
+        
+    #app.after(0, update_feed)
+    #app.mainloop()
 
 def remove_person(person_name):    #remove a person from the dataset
     if os.path.exists(f"dataset/{person_name}"):
