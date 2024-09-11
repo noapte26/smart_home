@@ -1,6 +1,6 @@
 ////// LIBRARIES ///////////////////////
 #include <Servo.h>
-#include <string.h>
+
 /////////////////////// PINS ///////////////////////
 //keypad 
 int KEYPAD_PIN = PIN_PC3; ////////aaaaa
@@ -60,7 +60,7 @@ String get_string(){
         x = get_char(keyIN);
 
         if (x == "*"){ //acts as enter
-          Serial.println("");
+          Serial.println(F(""));
           return str;
         }
         Serial.print(x);
@@ -83,33 +83,33 @@ class Password{
     //set first password
     void set_initial_password(const String& initial_password){
       this->password = initial_password;
-      Serial.println("Passord saved!");
+      Serial.println(F("Passord saved!"));
     }
 
     //change password function
     void change_password(){
-      Serial.println("Changing Password");
-      Serial.println("----------------------------------");
+      Serial.println(F("Changing Password"));
+      Serial.println(F("----------------------------------"));
       //if the entered password is the correct
-      Serial.println("Enter old password:");
+      Serial.println(F("Enter old password:"));
 
       if (check_password(get_string()) && this->tries > 0){
-        Serial.println("Correct Password");
-        Serial.println("Enter NEW password:");
+        Serial.println(F("Correct Password"));
+        Serial.println(F("Enter NEW password:"));
         this->password = get_string();
-        Serial.println("New Password Saved!");
+        Serial.println(F("New Password Saved!"));
       } 
       //else if it is wrong but tries > 0
       else if (this->tries > 0){
-        Serial.println("WRONG password");
-        Serial.print("Number of tries left: ");
+        Serial.println(F("WRONG password"));
+        Serial.print(F("Number of tries left: "));
         Serial.println(this->tries);
       }
       //too many tries
       else if (this->tries == 0){
-        Serial.println("Too many Tries");
-        Serial.println("You can't change the password anymore");
-        Serial.println("You are now locked");
+        Serial.println(F("Too many Tries"));
+        Serial.println(F("You can't change the password anymore"));
+        Serial.println(F("You are now locked"));
       }
     }
 
@@ -124,10 +124,10 @@ class Password{
 
     //password getter (for testing only!)
     void show_password(){
-      Serial.println("----------------------------------");
-      Serial.print("current password is ");
+      Serial.println(F("----------------------------------"));
+      Serial.print(F("current password is "));
       Serial.println(this->password);
-      Serial.println("----------------------------------");
+      Serial.println(F("----------------------------------"));
 
     }
 };
@@ -169,8 +169,8 @@ void setup(){
   analogWrite(rgb_blue, 0);
 
   //set initial password
-  Serial.println("Please enter your first password:");
-  // mypassword.set_initial_password(get_string());
+  Serial.println(F("Please enter your first password:"));
+  mypassword.set_initial_password(get_string());
 
 }
 
@@ -205,16 +205,16 @@ void loop(){
   
 if (x == "*"){ //if we press * we want to enter password
   if (mypassword.tries == 0){
-    Serial.println("You are locked and can't enter the house!");
+    Serial.println(F("You are locked and can't enter the house!"));
   }
 
-  Serial.println("Enter password to enter home");
+  Serial.println(F("Enter password to enter home"));
   bool ans = mypassword.check_password(get_string());
 
   //right guess
   if (ans && mypassword.tries > 0){
-    Serial.println("Correct Password!");
-    Serial.println("Welcome home");
+    Serial.println(F("Correct Password!"));
+    Serial.println(F("Welcome home"));
 
     ////Unlocking the door
     servo.write(90); //Rotate the servo to 90 degrees to unlock the door
@@ -230,9 +230,9 @@ if (x == "*"){ //if we press * we want to enter password
     analogWrite(led, lightLevel);
 
     // Print the LDR value and light level to the serial monitor
-    Serial.print("LDR Value: ");
+    Serial.print(F("LDR Value: "));
     Serial.println(ldrValue);
-    Serial.print("Light Level: ");
+    Serial.print(F("Light Level: "));
     Serial.println(lightLevel);
 
     //Delay
@@ -247,7 +247,7 @@ if (x == "*"){ //if we press * we want to enter password
     int temperature = map(tempValue, 0, 308, 0, 150);
 
     //Print the temperature(just for debugging)
-    Serial.print("Temperature: ");
+    Serial.print(F("Temperature: "));
     Serial.println(temperature);
 
       //Control RGB LED based on the temperature
@@ -283,8 +283,8 @@ if (x == "*"){ //if we press * we want to enter password
 
   //wrong password but still has some tries left
   else if (mypassword.tries > 0){
-      Serial.println("WRONG password");
-      Serial.print("Number of tries left: ");
+      Serial.println(F("WRONG password"));
+      Serial.print(F("Number of tries left: "));
       Serial.println(mypassword.tries);
   }
 
@@ -295,7 +295,7 @@ if (x == "*"){ //if we press * we want to enter password
   /////Now the wrong password door is locked
 
   ////Warning messages
-  Serial.println("Wrong password, Alert!");
+  Serial.println(F("Wrong password, Alert!"));
 
   while(1){
   //////PIR sensor/////////////////////////////////////
@@ -304,10 +304,10 @@ if (x == "*"){ //if we press * we want to enter password
 
     //Print the PIR sensor status to the Serial Monitor
     if (motionDetected == HIGH) {
-      Serial.println("Motion detected, someone is inside!");
+      Serial.println(F("Motion detected, someone is inside!"));
       } 
     else {
-      Serial.println("No motion detected, home is empty.");
+      Serial.println(F("No motion detected, home is empty."));
       }
 
   /////Buzzer ringing for 500 milliseconds
