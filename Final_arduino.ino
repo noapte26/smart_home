@@ -15,7 +15,7 @@ int keyIN = 0; //stores the keypad input
 #define rgb_blue     PIN_PD6    //PWM pin for blue LED
 #define motor_1      PIN_PB1    //Motor control pin 1 IN1
 #define motor_2      PIN_PB2    //Motor control pin 2 IN2
-#define motor_en     PIN_PC1    //motor enable
+#define motor_en     PIN_PB3    //motor enable
 #define buzzer       PIN_PD2    //Pin for buzzer
 #define pir          PIN_PB7    //Pin for PIR sensor
 #define servo_motor  PIN_PB0    //Pin for servo motor
@@ -144,7 +144,7 @@ void setup(){
 
   // Buzzer
   pinMode(buzzer, OUTPUT);
-
+  
   // LED (lighting system)
   pinMode(led, OUTPUT);
   
