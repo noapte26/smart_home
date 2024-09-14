@@ -271,8 +271,8 @@ if (x == "*"){ //if we press * we want to enter password
         }
     
     //Control motor speed based on temperature
-    int motorSpeed = map(temperature,20,80,128,255); //Adjust according to temp sensor range                     
-    analogWrite(motor_en, motorSpeed);               //above 128 is high and moves (anything less doesn't move)
+    int motorSpeed = map(temperature,20,80,0,255); //Adjust according to temp sensor range                     
+    analogWrite(motor_en, motorSpeed);              
     digitalWrite(motor_1, 1);
     digitalWrite(motor_2, 0); //To rotate in one direction (Fan)
 
