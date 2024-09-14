@@ -24,7 +24,7 @@ embedding_model = dlib.face_recognition_model_v1("dlib_face_recognition_resnet_m
 shape_predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
 
-#ser = serial.Serial('COM1', 9600, timeout=1)  # get serial instance and set timeout to 1, it returns all available bytes after 1s
+#ser = serial.Serial('Port_#0005.Hub_#0001', 9600, timeout=1)  # get serial instance and set timeout to 1, it returns all available bytes after 1s
 #print(ser.name)
 
 def send_signal(signal):
@@ -359,9 +359,9 @@ def notifications_window () :
 #notifications_window()  
 
 
-persons = ["Heba", "Manar"]  #list of owners' names in the dataset to compare with their embeddings
-recognize_face(persons)
+#persons = ["Heba", "Hana"]  #list of owners' names in the dataset to compare with their embeddings
+#recognize_face(persons)
 
 
-#create_control_interface()
+create_control_interface()
     
